@@ -53,8 +53,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DTO\EventUpdate.cs" />
-    <Compile Include="Process\Producer.cs" />
+    <Compile Include="DTO\OddsUpdate.cs" />
+    <Compile Include="Process\ProducerProcess.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

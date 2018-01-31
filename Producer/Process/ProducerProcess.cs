@@ -25,10 +25,15 @@ namespace Producer.Process
             cacheProvider = new RedisCacheProvider();
         }
 
-        public void Run()
+        public void Run(CancellationTokenSource cancelTokenSource)
         {
             while (true)
             {
+                if (cancelTokenSource.Token.IsCancellationRequested)
+                {
+                    break;
+                }
+
                 Thread.Sleep(1);
 
                 if (EventUpdates.Any())
