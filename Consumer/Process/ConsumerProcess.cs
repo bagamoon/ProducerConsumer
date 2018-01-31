@@ -36,7 +36,7 @@ namespace Consumer.Process
 
                 var key = allkeys.FirstOrDefault();
 
-                if (key != null)
+                if (key != null && key.StartsWith("OddsUpdate"))
                 {
                     Console.WriteLine($"{Name} - get key: {key}");
 

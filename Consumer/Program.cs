@@ -28,7 +28,8 @@ namespace Consumer
                 else if (input.Key == ConsoleKey.S)
                 {
                     cancelTokenSource = new CancellationTokenSource();
-                    PrepareThreads(threadCound, cancelTokenSource);                    
+                    PrepareThreads(threadCound, cancelTokenSource);      
+                    //new ConsumerProcess("").Run(cancelTokenSource);
                 }
                 else if (input.Key == ConsoleKey.Q)
                 {

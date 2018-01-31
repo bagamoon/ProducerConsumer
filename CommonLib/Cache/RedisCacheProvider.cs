@@ -26,7 +26,7 @@ namespace CommonLib.Cache
 
             var _conn = CreateRedisConnection(connString);            
             _database = _conn.GetDatabase();
-            _server = _conn.GetServer(_host, _port);
+            _server = _conn.GetServer(_host, _port);            
         }        
 
         public bool Add<T>(string key, T value, DateTimeOffset? expiresAt = null) where T : class

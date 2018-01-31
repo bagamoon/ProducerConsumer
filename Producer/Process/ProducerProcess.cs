@@ -43,7 +43,9 @@ namespace Producer.Process
                     {
                         Thread.Sleep(new Random().Next(1, 500));
 
-                        cacheProvider.Add(update.OddsId.ToString(), update);
+                        string key = $"OddsUpdate-{update.OddsId}";
+
+                        cacheProvider.Add(key, update);
 
                         Console.WriteLine($"{Name} - updated OddId: {update.OddsId}, Odds: {update.Odds}");
                     }

@@ -61,7 +61,7 @@ namespace Producer
                     {
                         var update = new OddsUpdate
                         {
-                            OddsId = new Random().Next(1, 100),
+                            OddsId = new Random().Next(1, 500),
                             Odds = odds
                         };
 
