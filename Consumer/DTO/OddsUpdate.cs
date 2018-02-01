@@ -11,5 +11,7 @@ namespace Consumer.DTO
         public int OddsId { get; set; }        
 
         public decimal Odds { get; set; }
+
+        public DateTime DateUpdated { get; set; }
     }
 }
