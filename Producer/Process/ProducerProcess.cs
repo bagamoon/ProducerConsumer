@@ -7,6 +7,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using CommonLib.Cache;
+using StackExchange.Redis;
+using System.Configuration;
+using Newtonsoft.Json;
 
 namespace Producer.Process
 {
@@ -16,13 +19,17 @@ namespace Producer.Process
 
         public ConcurrentQueue<OddsUpdate> EventUpdates;
 
-        ICacheProvider cacheProvider;
+        private string Host = ConfigurationManager.AppSettings["RedisHost"];
+        private int Port = Convert.ToInt32(ConfigurationManager.AppSettings["RedisPort"]);
+        private ConnectionMultiplexer _redisConn;        
 
         public ProducerProcess(string name)
         {
             Name = name;
             EventUpdates = new ConcurrentQueue<OddsUpdate>();
-            cacheProvider = new RedisCacheProvider();
+
+            string connString = $"{Host}:{Port}";
+            _redisConn = ConnectionMultiplexer.Connect(connString);
         }
 
         public void Run(CancellationTokenSource cancelTokenSource)
@@ -43,11 +50,14 @@ namespace Producer.Process
                     {
                         Thread.Sleep(new Random().Next(1, 500));
 
-                        string key = $"OddsUpdate-{update.OddsId}";
+                        string key = $"OddsUpdate-{update.OddsId}";                        
 
-                        cacheProvider.Add(key, update);
+                        var db = _redisConn.GetDatabase();
+                        db.ListLeftPush(key, JsonConvert.SerializeObject(update));
+                        
 
-                        Console.WriteLine($"{Name} - updated OddId: {update.OddsId}, Odds: {update.Odds}");
+
+                        Console.WriteLine($"{Name} - updated OddId: {update.OddsId}, Odds: {update.Odds}, Datetime: {update.DateUpdated.ToString("mm:ss.fff")}");
                     }
                 }
 
