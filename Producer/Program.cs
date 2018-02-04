@@ -14,8 +14,7 @@ namespace Producer
     class Program
     {       
         private static List<Task> tasks = new List<Task>();
-        private static List<ProducerProcess> producers = new List<ProducerProcess>();
-        private static int threadCound = 2;
+        private static List<ProducerProcess> producers = new List<ProducerProcess>();        
 
         static void Main(string[] args)
         {
@@ -31,7 +30,7 @@ namespace Producer
                 else if (input.Key == ConsoleKey.S)
                 {
                     cancelTokenSource = new CancellationTokenSource();
-                    PrepareThreads(threadCound, cancelTokenSource);
+                    PrepareThreads(cancelTokenSource);
                     DispatchUpdates(cancelTokenSource);
                 }
                 else if (input.Key == ConsoleKey.Q)
@@ -61,7 +60,7 @@ namespace Producer
                     {
                         var update = new OddsUpdate
                         {
-                            OddsId = new Random().Next(1, 500),
+                            OddsId = new Random().Next(1, 10),
                             Odds = odds,
                             DateUpdated = DateTime.Now
                         };
@@ -72,18 +71,15 @@ namespace Producer
             }, cancelTokenSource.Token);
         }
 
-        private static void PrepareThreads(int count, CancellationTokenSource cancelTokenSource)
+        private static void PrepareThreads(CancellationTokenSource cancelTokenSource)
         {
-            for (int i = 1; i <= count; i++)
-            {
-                string name = $"Producer-{i}";
-                ProducerProcess p = new ProducerProcess(name);
-                producers.Add(p);
-                
-                var task = Task.Factory.StartNew(() => p.Run(cancelTokenSource), cancelTokenSource.Token, 
-                                                 TaskCreationOptions.LongRunning, TaskScheduler.Default);
-                tasks.Add(task);                
-            }            
+            string name = $"Producer";
+            ProducerProcess p = new ProducerProcess(name);
+            producers.Add(p);
+
+            var task = Task.Factory.StartNew(() => p.Run(cancelTokenSource), cancelTokenSource.Token,
+                                             TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            tasks.Add(task);
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using Consumer.Process;
+﻿using ProcessingMonitor.Process;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,12 +6,12 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Consumer
+namespace ProcessingMonitor
 {
     class Program
     {
         private static List<Task> tasks = new List<Task>();
-        private static List<ConsumerProcess> consumers = new List<ConsumerProcess>();        
+        private static List<MonitorProcess> monitors = new List<MonitorProcess>();
 
         static void Main(string[] args)
         {
@@ -27,23 +27,22 @@ namespace Consumer
                 else if (input.Key == ConsoleKey.S)
                 {
                     cancelTokenSource = new CancellationTokenSource();
-                    PrepareThreads(cancelTokenSource);                          
+                    PrepareThreads(cancelTokenSource);
                 }
                 else if (input.Key == ConsoleKey.Q)
                 {
                     break;
                 }
             }
-
         }
 
         private static void PrepareThreads(CancellationTokenSource cancelTokenSource)
         {
-            string name = $"Consumer-{Guid.NewGuid()}";
-            ConsumerProcess c = new ConsumerProcess(name);
-            consumers.Add(c);
+            string name = $"Monitor";
+            MonitorProcess m = new MonitorProcess(name);
+            monitors.Add(m);
 
-            var task = Task.Factory.StartNew(() => c.Run(cancelTokenSource), cancelTokenSource.Token,
+            var task = Task.Factory.StartNew(() => m.Run(cancelTokenSource), cancelTokenSource.Token,
                                                      TaskCreationOptions.LongRunning, TaskScheduler.Default);
             tasks.Add(task);
         }

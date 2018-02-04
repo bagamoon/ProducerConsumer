@@ -1,7 +1,10 @@
 ﻿using CommonLib.Cache;
 using Consumer.DTO;
+using Newtonsoft.Json;
+using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -13,16 +16,24 @@ namespace Consumer.Process
     {
         public string Name { get; private set; }
 
-        ICacheProvider cacheProvider;
+        private string Host = ConfigurationManager.AppSettings["RedisHost"];
+        private int Port = Convert.ToInt32(ConfigurationManager.AppSettings["RedisPort"]);
+        private ConnectionMultiplexer _redisConn;
 
         public ConsumerProcess(string name)
         {
             Name = name;
-            cacheProvider = new RedisCacheProvider();
+
+            string connString = $"{Host}:{Port}";
+            _redisConn = ConnectionMultiplexer.Connect(connString);                       
         }
 
         public void Run(CancellationTokenSource cancelTokenSource)
-        {            
+        {
+            var db = _redisConn.GetDatabase();
+            var processKey = "OddsConsumers";
+            db.SetAdd(processKey, Name);
+
             while (true)
             {
                 if (cancelTokenSource.Token.IsCancellationRequested)
@@ -30,35 +41,37 @@ namespace Consumer.Process
                     break;
                 }
 
-                Thread.Sleep(1);
+                Thread.Sleep(1);                
 
-                var allkeys = cacheProvider.GetAllKey();
+                var key = "OddsUpdate";
+                var updateSerialized = db.ListLeftPop(key);                
 
-                var key = allkeys.FirstOrDefault();
+                var processingKey = $"{key}-Processing-{Name}";
+                var doneKey = $"{key}-Done";
 
-                if (key != null && key.StartsWith("OddsUpdate"))
+                if (updateSerialized.HasValue)
                 {
-                    Console.WriteLine($"{Name} - get key: {key}");
-
-                    var success = cacheProvider.Execute(key, () =>
-                                {
-                                    var update = cacheProvider.Get<OddsUpdate>(key);
-
-                                    Thread.Sleep(new Random().Next(500, 1000));
-
-                                    Console.WriteLine($"{Name} - OddsId: {update.OddsId}, Odds: {update.Odds}");
-
-                                    cacheProvider.DeleteKey(key);
-                                }, 2);
-
-                    if (!success)
+                    var isDoneAlready = db.SetContains(doneKey, updateSerialized);
+                    if (isDoneAlready)
                     {
-                        Console.WriteLine($"{Name} - cannot get the lock with key: {key}");
+                        Console.WriteLine($"already done: {updateSerialized}, update was ignored");
+                        continue;
                     }
+
+                    var update = JsonConvert.DeserializeObject<OddsUpdate>(updateSerialized);                    
+
+                    var isMoveProcessing = db.SortedSetAdd(processingKey, updateSerialized, update.DateUpdated.Ticks);                    
+
+                    if (isMoveProcessing)
+                    {
+                        Console.WriteLine($"Processing OddsId: {update.OddsId}, Odds: {update.Odds}, DateUpdated: {update.DateUpdated.ToString("HH:mm:ss.fff")}");
+                        Thread.Sleep(new Random().Next(100, 3000));
+
+                        db.SortedSetRemove(processingKey, updateSerialized);
+                        db.SetAdd(doneKey, updateSerialized);
+                    }                    
                 }
             }
-
         }
-
     }
 }

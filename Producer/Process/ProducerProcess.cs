@@ -48,16 +48,14 @@ namespace Producer.Process
                     OddsUpdate update;
                     if (EventUpdates.TryDequeue(out update))
                     {
-                        Thread.Sleep(new Random().Next(1, 500));
+                        Thread.Sleep(new Random().Next(100, 500));
 
-                        string key = $"OddsUpdate-{update.OddsId}";                        
+                        string key = "OddsUpdate";
 
                         var db = _redisConn.GetDatabase();
-                        db.ListLeftPush(key, JsonConvert.SerializeObject(update));
-                        
+                        var result = db.ListRightPush(key, JsonConvert.SerializeObject(update));                        
 
-
-                        Console.WriteLine($"{Name} - updated OddId: {update.OddsId}, Odds: {update.Odds}, Datetime: {update.DateUpdated.ToString("mm:ss.fff")}");
+                        Console.WriteLine($"{Name} - updated OddId: {update.OddsId}, Odds: {update.Odds}, Datetime: {update.DateUpdated.ToString("HH:mm:ss.fff")}");
                     }
                 }
 
